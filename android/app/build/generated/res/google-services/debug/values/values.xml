@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gcm_defaultSenderId" translatable="false">81096515070</string>
+    <string name="google_api_key" translatable="false">AIzaSyCaK64AaO_XnaX4sA42VcQucs38lWaL4ck</string>
+    <string name="google_app_id" translatable="false">1:81096515070:android:d4a4704679cb40d52ab4af</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCaK64AaO_XnaX4sA42VcQucs38lWaL4ck</string>
+    <string name="google_storage_bucket" translatable="false">livekick.appspot.com</string>
+    <string name="project_id" translatable="false">livekick</string>
+</resources>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "81096515070",
+    "project_id": "livekick",
+    "storage_bucket": "livekick.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:81096515070:android:d4a4704679cb40d52ab4af",
+        "android_client_info": {
+          "package_name": "com.example.livekick"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaK64AaO_XnaX4sA42VcQucs38lWaL4ck"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
