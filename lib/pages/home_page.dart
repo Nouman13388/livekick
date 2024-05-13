@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:livekick/pages/match_schedule.dart';
-import 'package:livekick/pages/news_page.dart';
-import 'package:livekick/pages/settings_page.dart';
-import 'package:livekick/pages/streaming_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:livekick/models/server.dart';
+import '../pages/news_page.dart';
+import '../pages/match_schedule.dart';
+import '../pages/settings_page.dart';
+import '../pages/streaming_page.dart';
+import '../pages/login_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({Key? key});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -15,22 +18,20 @@ class _HomePageState extends State<HomePage> {
   int _selectedTabIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  late Server _server;
   late List<Widget> _tabScreens;
 
   @override
   void initState() {
-    _server = Server(
-      id: 1,
-      name: 'LiveStream',
-      url: 'https://live-par-2-abr.livepush.io/vod/bigbuckbunnyclip.mp4',
-      headers: {}, // Add any necessary headers
-    );
-
     _tabScreens = [
       const NewsPage(),
       const MatchSchedule(),
-      StreamingPage(server: _server), // Pass data to StreamingPage here
+      StreamingPage(
+          //   server: Server(
+          // id: 1,
+          // name: 'LiveStream',
+          // url: 'https://live-par-2-abr.livepush.io/vod/bigbuckbunnyclip.mp4',
+          // headers: {}, // Add any necessary headers
+          ),
       const SettingsPage(),
     ];
 
@@ -51,6 +52,15 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+      (Route<dynamic> route) => false, // Prevent going back to home
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,7 +78,7 @@ class _HomePageState extends State<HomePage> {
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () {
-            _scaffoldKey.currentState?.openDrawer(); // Open the drawer
+            _scaffoldKey.currentState?.openDrawer();
           },
         ),
         actions: <Widget>[
@@ -101,6 +111,10 @@ class _HomePageState extends State<HomePage> {
                   fontSize: 24,
                 ),
               ),
+            ),
+            ListTile(
+              title: const Text('Logout'),
+              onTap: _logout,
             ),
             ListTile(
               title: const Text('Item 1'),

@@ -39,6 +39,9 @@ dependencies:
   http: ^1.2.1
   video_player: ^2.6.0
   better_player: ^0.0.83
+  firebase_auth: ^4.19.5
+  google_sign_in: ^6.2.1
+  font_awesome_flutter: ^10.7.0
 
 dev_dependencies:
   flutter_test:
