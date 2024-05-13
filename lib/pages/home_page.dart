@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:livekick/models/server.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../pages/news_page.dart';
 import '../pages/match_schedule.dart';
-import '../pages/settings_page.dart';
+import 'settings_pages/settings_page.dart';
 import '../pages/streaming_page.dart';
 import '../pages/login_page.dart';
 
@@ -19,23 +19,26 @@ class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   late List<Widget> _tabScreens;
+  SharedPreferences? prefs;
 
   @override
   void initState() {
-    _tabScreens = [
-      const NewsPage(),
-      const MatchSchedule(),
-      StreamingPage(
-          //   server: Server(
-          // id: 1,
-          // name: 'LiveStream',
-          // url: 'https://live-par-2-abr.livepush.io/vod/bigbuckbunnyclip.mp4',
-          // headers: {}, // Add any necessary headers
-          ),
-      const SettingsPage(),
-    ];
-
     super.initState();
+    _tabScreens =
+        List.filled(4, const SizedBox()); // Initialize with empty widgets
+    _initSharedPreferences();
+  }
+
+  void _initSharedPreferences() async {
+    prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _tabScreens = [
+        const NewsPage(),
+        const MatchSchedule(),
+        StreamingPage(), // You can pass any required parameters here
+        SettingsPage(prefs: prefs!), // SettingsPage requires initialized prefs
+      ];
+    });
   }
 
   bool _isSearchExpanded = false;
@@ -56,7 +59,11 @@ class _HomePageState extends State<HomePage> {
     await FirebaseAuth.instance.signOut();
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
+      MaterialPageRoute(
+        builder: (context) => LoginPage(
+          prefs: prefs!,
+        ),
+      ),
       (Route<dynamic> route) => false, // Prevent going back to home
     );
   }

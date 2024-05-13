@@ -1,13 +1,15 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'home_page.dart';
 import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key});
+  final SharedPreferences prefs;
+
+  const LoginPage({Key? key, required this.prefs}) : super(key: key);
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -19,7 +21,21 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _rememberMe = false;
 
-  Future<bool> _authenticateUser(BuildContext context) async {
+  @override
+  void initState() {
+    super.initState();
+    _initSharedPreferences();
+  }
+
+  void _initSharedPreferences() async {
+    setState(() {
+      _emailController.text = widget.prefs.getString('email') ?? '';
+      _passwordController.text = widget.prefs.getString('password') ?? '';
+      _rememberMe = widget.prefs.getBool('rememberMe') ?? false;
+    });
+  }
+
+  Future<void> _authenticateUser(BuildContext context) async {
     setState(() {
       _isLoading = true;
     });
@@ -29,42 +45,54 @@ class _LoginPageState extends State<LoginPage> {
           .signInWithEmailAndPassword(
               email: _emailController.text, password: _passwordController.text);
 
+      if (_rememberMe) {
+        widget.prefs.setString('email', _emailController.text);
+        widget.prefs.setString('password', _passwordController.text);
+        widget.prefs.setBool('rememberMe', _rememberMe);
+      }
+
       _emailController.clear();
       _passwordController.clear();
 
-      return true;
-    } on FirebaseAuthException catch (e) {
-      String errorMessage = 'An error occurred. Please try again later.';
-
-      if (e.code == 'user-not-found') {
-        errorMessage = 'No user found for that email.';
-      } else if (e.code == 'wrong-password') {
-        errorMessage = 'Wrong password provided for that user.';
-      }
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
+        const SnackBar(
+          content: Text('Sign In successful.'),
         ),
       );
 
-      return false;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const HomePage(),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_mapFirebaseAuthExceptionMessage(e.code)),
+        ),
+      );
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('An error occurred. Please try again later.'),
         ),
       );
-
-      if (kDebugMode) {
-        print("Error signing in with email: $error");
-      }
-
-      return false;
     } finally {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  String _mapFirebaseAuthExceptionMessage(String errorCode) {
+    switch (errorCode) {
+      case 'user-not-found':
+        return 'No user found for that email.';
+      case 'wrong-password':
+        return 'Wrong password provided for that user.';
+      default:
+        return 'An error occurred. Please try again later.';
     }
   }
 
@@ -76,6 +104,12 @@ class _LoginPageState extends State<LoginPage> {
     try {
       UserCredential userCredential =
           await FirebaseAuth.instance.signInAnonymously();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Guest sign-in successful.'),
+        ),
+      );
 
       Navigator.pushReplacement(
         context,
@@ -89,10 +123,7 @@ class _LoginPageState extends State<LoginPage> {
           content: Text('An error occurred. Please try again later.'),
         ),
       );
-
-      if (kDebugMode) {
-        print("Error signing in as guest: $error");
-      }
+      print("Error signing in as guest: $error");
     } finally {
       setState(() {
         _isLoading = false;
@@ -120,6 +151,12 @@ class _LoginPageState extends State<LoginPage> {
 
         await FirebaseAuth.instance.signInWithCredential(credential);
 
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google sign-in successful.'),
+          ),
+        );
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -128,20 +165,39 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } catch (error) {
-      String errorMessage = 'An error occurred. Please try again later.';
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
+        const SnackBar(
+          content: Text('An error occurred. Please try again later.'),
         ),
       );
-
       print("Error signing in with Google: $error");
     } finally {
       setState(() {
         _isLoading = false;
       });
     }
+  }
+
+  void _logout() async {
+    await FirebaseAuth.instance.signOut();
+    widget.prefs.remove('email');
+    widget.prefs.remove('password');
+    widget.prefs.remove('rememberMe');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Logout successful.'),
+      ),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LoginPage(
+          prefs: widget.prefs,
+        ),
+      ),
+    );
   }
 
   @override
@@ -203,17 +259,7 @@ class _LoginPageState extends State<LoginPage> {
                       onPressed: _isLoading
                           ? null
                           : () async {
-                              final isAuthenticated =
-                                  await _authenticateUser(context);
-
-                              if (isAuthenticated) {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const HomePage(),
-                                  ),
-                                );
-                              }
+                              await _authenticateUser(context);
                             },
                       child: _isLoading
                           ? const CircularProgressIndicator()
