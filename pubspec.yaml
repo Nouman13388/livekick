@@ -45,6 +45,7 @@ dependencies:
   shared_preferences: ^2.2.3
   get: ^4.6.6
   chewie: ^1.5.0
+  wakelock: ^0.6.2
 
 dev_dependencies:
   flutter_test:

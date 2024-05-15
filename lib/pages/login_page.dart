@@ -9,7 +9,7 @@ import 'signup_page.dart';
 class LoginPage extends StatefulWidget {
   final SharedPreferences prefs;
 
-  const LoginPage({Key? key, required this.prefs}) : super(key: key);
+  const LoginPage({super.key, required this.prefs});
 
   @override
   _LoginPageState createState() => _LoginPageState();

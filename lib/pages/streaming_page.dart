@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import 'package:wakelock/wakelock.dart';
 
 class StreamingPage extends StatefulWidget {
-  const StreamingPage({Key? key});
+  const StreamingPage({Key? key}) : super(key: key);
 
   @override
   _StreamingPageState createState() => _StreamingPageState();
@@ -12,7 +13,7 @@ class StreamingPage extends StatefulWidget {
 class _StreamingPageState extends State<StreamingPage> {
   late VideoPlayerController _videoPlayerController;
   late ChewieController _chewieController;
-  String longVideo = "https://sportsleading.online/live/stream_f1.m3u8";
+  String longVideo = "https://sportsleading.online/live/stream_mlb7.m3u8";
   Map<String, String> headers = {
     "origin": "https://streambtw.com",
     "referer": "https://streambtw.com/",
@@ -24,21 +25,22 @@ class _StreamingPageState extends State<StreamingPage> {
   final bool isLive = true;
 
   late String selectedSource;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-
+    Wakelock.enable(); // Enable wakelock to keep the screen on
     selectedSource = 'Source 1'; // Initialize the selected source
     _initializePlayer(longVideo);
   }
 
-  void _initializePlayer(String videoUrl) {
+  Future<void> _initializePlayer(String videoUrl) async {
     _videoPlayerController = VideoPlayerController.network(
-      httpHeaders: headers,
       videoUrl,
-      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      httpHeaders: headers,
     );
+    await _videoPlayerController.initialize();
     _chewieController = ChewieController(
       videoPlayerController: _videoPlayerController,
       autoInitialize: true,
@@ -46,29 +48,25 @@ class _StreamingPageState extends State<StreamingPage> {
       allowFullScreen: true,
       allowMuting: true,
       autoPlay: true,
-      isLive: true,
+      isLive: isLive,
       cupertinoProgressColors: ChewieProgressColors(
-        playedColor: Colors.blue,
-        handleColor: Colors.blueAccent,
+        playedColor: Colors.red,
+        handleColor: Colors.redAccent,
+        backgroundColor: Colors.grey,
+        bufferedColor: Colors.lightBlue,
+      ),
+      materialProgressColors: ChewieProgressColors(
+        playedColor: Colors.red,
+        handleColor: Colors.redAccent,
         backgroundColor: Colors.grey,
         bufferedColor: Colors.lightBlue,
       ),
       hideControlsTimer: const Duration(seconds: 3),
-      transformationController: TransformationController(),
-      draggableProgressBar: true,
-      aspectRatio: 16 / 9,
       showControlsOnInitialize: true,
-      showControls: true,
       showOptions: true,
       controlsSafeAreaMinimum: const EdgeInsets.all(0),
-      maxScale: double.infinity,
-      customControls: const CupertinoControls(
-        backgroundColor: Colors.blueAccent,
-        iconColor: Colors.white,
-        showPlayButton: true,
-      ),
-      looping: true,
-      zoomAndPan: true,
+      aspectRatio: 16 / 9,
+      customControls: CustomControls(isLive: isLive),
       errorBuilder: (context, errorMessage) {
         return Center(
           child: Text(
@@ -78,12 +76,24 @@ class _StreamingPageState extends State<StreamingPage> {
         );
       },
     );
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _initializePlayer(longVideo);
   }
 
   @override
   void dispose() {
     _videoPlayerController.dispose();
     _chewieController.dispose();
+    Wakelock.disable(); // Disable wakelock when the widget is disposed
     super.dispose();
   }
 
@@ -92,291 +102,48 @@ class _StreamingPageState extends State<StreamingPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Live Stream'),
+        backgroundColor: Colors.red,
       ),
-      body: ListView(
-        children: [
-          Column(
-            children: [
-              SizedBox(
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height * 0.4,
-                child: Chewie(controller: _chewieController),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  // Get.to(MatchDetailsPage(
-                  //   matchDetails: MatchDetails(
-                  //     matchId: 1,
-                  //     tournamentName: 'NBA',
-                  //     team1Name: '',
-                  //     team2Name: '',
-                  //     team1Score: 0,
-                  //     team2Score: 0,
-                  //     isLive: isLive,
-                  //     date: DateTime.now(),
-                  //     matchNumber: '1/20',
-                  //   ),
-                  // ));
-                },
-                child: const Text('Match Details'),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      _initializePlayer(longVideo);
-                      setState(() {
-                        selectedSource = 'Source 1';
-                      });
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(
-                        selectedSource == 'Source 1'
-                            ? Colors.blue
-                            : Colors.grey,
-                      ),
-                      foregroundColor: MaterialStateProperty.all<Color>(
-                        Colors.white,
-                      ),
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: ListView(
+          children: [
+            Center(
+              child: _isLoading
+                  ? const CircularProgressIndicator()
+                  : SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height * 0.4,
+                      child: Chewie(controller: _chewieController),
                     ),
-                    child: const Text('Source 1'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _initializePlayer(longVideo);
-                      setState(() {
-                        selectedSource = 'Source 2';
-                      });
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(
-                        selectedSource == 'Source 2'
-                            ? Colors.blue
-                            : Colors.grey,
-                      ),
-                      foregroundColor: MaterialStateProperty.all<Color>(
-                        Colors.white,
-                      ),
-                    ),
-                    child: const Text('Source 2'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _initializePlayer(longVideo);
-                      setState(() {
-                        selectedSource = 'Source 3';
-                      });
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(
-                        selectedSource == 'Source 3'
-                            ? Colors.blue
-                            : Colors.grey,
-                      ),
-                      foregroundColor: MaterialStateProperty.all<Color>(
-                        Colors.white,
-                      ),
-                    ),
-                    child: const Text('Source 3'),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      _initializePlayer(premiumVideo);
-                      setState(() {
-                        selectedSource = 'Premium';
-                      });
-                    },
-                    icon: const Icon(Icons.star),
-                    label: const Text('Premium'),
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(
-                        selectedSource == 'Premium' ? Colors.blue : Colors.grey,
-                      ),
-                      foregroundColor: MaterialStateProperty.all<Color>(
-                        Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
+class CustomControls extends StatelessWidget {
+  final bool isLive;
 
+  const CustomControls({super.key, required this.isLive});
 
-
-
-
-// // pages/streaming_page.dart
-
-// import 'package:flutter/foundation.dart';
-// import 'package:flutter/material.dart';
-// import 'package:flutter/services.dart';
-// import 'package:better_player/better_player.dart';
-// import '../models/server.dart';
-
-// const Color windowBackground = Color(0xFF070d17);
-// const Color cardColor = Color(0xFF182035);
-// const Color red = Color(0xFFED2044);
-
-// class StreamingPage extends StatefulWidget {
-//   final Server server;
-
-//   const StreamingPage({Key? key, required this.server}) : super(key: key);
-
-//   @override
-//   State<StatefulWidget> createState() => _StreamingPageState();
-// }
-
-// class _StreamingPageState extends State<StreamingPage> {
-//   late BetterPlayerController _betterPlayerController;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _initializePlayer();
-//     SystemChrome.setPreferredOrientations([
-//       DeviceOrientation.landscapeRight,
-//       DeviceOrientation.landscapeLeft,
-//     ]);
-//     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     var size = MediaQuery.of(context).size;
-//     return Scaffold(
-//       backgroundColor: windowBackground,
-//       body: SizedBox(
-//         width: size.width,
-//         height: size.height,
-//         child: Stack(
-//           children: [
-//             if (_betterPlayerController != null)
-//               BetterPlayer(controller: _betterPlayerController),
-//             Positioned(
-//               top: 16,
-//               left: 16,
-//               child: GestureDetector(
-//                 onTap: () {
-//                   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-//                       overlays: SystemUiOverlay.values);
-//                   SystemChrome.setPreferredOrientations([
-//                     DeviceOrientation.landscapeRight,
-//                     DeviceOrientation.landscapeLeft,
-//                     DeviceOrientation.portraitUp,
-//                     DeviceOrientation.portraitDown,
-//                   ]);
-//                   Navigator.pop(context);
-//                 },
-//                 child: Container(
-//                   height: 36,
-//                   width: 36,
-//                   decoration: BoxDecoration(
-//                     color: cardColor,
-//                     borderRadius: BorderRadius.circular(8),
-//                   ),
-//                   child: const Icon(Icons.close, color: Colors.white),
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   @override
-//   void dispose() {
-//     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-//         overlays: SystemUiOverlay.values);
-//     SystemChrome.setPreferredOrientations([
-//       DeviceOrientation.landscapeRight,
-//       DeviceOrientation.landscapeLeft,
-//       DeviceOrientation.portraitUp,
-//       DeviceOrientation.portraitDown,
-//     ]);
-//     _betterPlayerController.dispose(); // Dispose the controller
-//     super.dispose();
-//   }
-
-//   void _initializePlayer() {
-//     BetterPlayerDataSource? betterPlayerDataSource;
-
-//     if (widget.server.headers.containsKey("token")) {
-//       // Token-based DRM
-//       BetterPlayerDrmConfiguration drmConfiguration =
-//           BetterPlayerDrmConfiguration(
-//         drmType: BetterPlayerDrmType.token,
-//         token: widget.server.headers["token"]!,
-//       );
-
-//       betterPlayerDataSource = BetterPlayerDataSource(
-//         BetterPlayerDataSourceType.network,
-//         widget.server.url,
-//         drmConfiguration: drmConfiguration,
-//       );
-//     } else {
-//       // Regular video without DRM
-//       betterPlayerDataSource = BetterPlayerDataSource(
-//         BetterPlayerDataSourceType.network,
-//         widget.server.url,
-//         headers: widget.server.headers,
-//       );
-//     }
-
-//     _betterPlayerController = BetterPlayerController(
-//       BetterPlayerConfiguration(
-//         aspectRatio: 16 / 9,
-//         autoPlay: true,
-//         controlsConfiguration: BetterPlayerControlsConfiguration(
-//           loadingColor: red,
-//           enableFullscreen: false,
-//         ),
-//       ),
-//       betterPlayerDataSource: betterPlayerDataSource!,
-//     );
-
-//     _betterPlayerController
-//         .setupDataSource(betterPlayerDataSource!)
-//         .then((value) {
-//       if (kDebugMode) {
-//         print("Data source setup successfully");
-//       }
-//     }).catchError((error) {
-//       if (kDebugMode) {
-//         print("Error setting up data source: $error");
-//       }
-//     });
-//   }
-// }
-
-
-
-
-
-
-
-// import 'package:flutter/material.dart';
-
-// class StreamingPage extends StatefulWidget {
-//   const StreamingPage({super.key});
-
-//   @override
-//   State<StreamingPage> createState() => _StreamingPageState();
-// }
-
-// class _StreamingPageState extends State<StreamingPage> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return const Placeholder();
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        if (isLive)
+          const Positioned.fill(
+            child: Align(
+              alignment: Alignment(0, 0.9),
+              child: MaterialControls(
+                  // Add your custom live controls here
+                  
+                  ),
+            ),
+          ),
+      ],
+    );
+  }
+}
