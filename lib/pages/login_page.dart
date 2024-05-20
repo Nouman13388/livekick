@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:livekick/pages/banner_ad.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -27,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
     _initSharedPreferences();
   }
 
-  void _initSharedPreferences() async {
+  void _initSharedPreferences() {
     setState(() {
       _emailController.text = widget.prefs.getString('email') ?? '';
       _passwordController.text = widget.prefs.getString('password') ?? '';
@@ -326,6 +327,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                 ),
               ),
+              const SizedBox(height: 30),
+              const BannerAdWidget(), // Add the BannerAdWidget here
             ],
           ),
         ),

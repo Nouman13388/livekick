@@ -4,7 +4,7 @@ import 'package:chewie/chewie.dart';
 import 'package:wakelock/wakelock.dart';
 
 class StreamingPage extends StatefulWidget {
-  const StreamingPage({Key? key}) : super(key: key);
+  const StreamingPage({super.key});
 
   @override
   _StreamingPageState createState() => _StreamingPageState();
@@ -13,7 +13,7 @@ class StreamingPage extends StatefulWidget {
 class _StreamingPageState extends State<StreamingPage> {
   late VideoPlayerController _videoPlayerController;
   late ChewieController _chewieController;
-  String longVideo = "https://sportsleading.online/live/stream_mlb7.m3u8";
+  String longVideo = "https://sportsleading.online/live/stream_f1.m3u8";
   Map<String, String> headers = {
     "origin": "https://streambtw.com",
     "referer": "https://streambtw.com/",

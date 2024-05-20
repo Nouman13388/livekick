@@ -46,6 +46,7 @@ dependencies:
   get: ^4.6.6
   chewie: ^1.5.0
   wakelock: ^0.6.2
+  google_mobile_ads: ^5.1.0
 
 dev_dependencies:
   flutter_test:

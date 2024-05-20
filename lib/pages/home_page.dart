@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:livekick/pages/banner_ad.dart';
 import 'package:livekick/pages/settings_pages/account_setting_page.dart';
 import 'package:livekick/pages/settings_pages/notification_preference_page.dart';
 import 'package:livekick/pages/settings_pages/privacy_policy_page.dart';
@@ -253,7 +254,12 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      body: _tabScreens[_selectedTabIndex],
+      body: Column(
+        children: [
+          Expanded(child: _tabScreens[_selectedTabIndex]),
+          BannerAdWidget(), // Add the BannerAdWidget here
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedTabIndex,
         onTap: _onTabSelected,
