@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:wakelock/wakelock.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class StreamingPage extends StatefulWidget {
-  const StreamingPage({super.key});
+  const StreamingPage({Key? key}) : super(key: key);
 
   @override
   _StreamingPageState createState() => _StreamingPageState();
@@ -12,88 +13,101 @@ class StreamingPage extends StatefulWidget {
 
 class _StreamingPageState extends State<StreamingPage> {
   late VideoPlayerController _videoPlayerController;
-  late ChewieController _chewieController;
-  String longVideo = "https://sportsleading.online/live/stream_f1.m3u8";
+  ChewieController? _chewieController;
+  String longVideo = "https://sportsleading.online/live/stream_nba1.m3u8";
   Map<String, String> headers = {
     "origin": "https://streambtw.com",
     "referer": "https://streambtw.com/",
     "User-Agent": "Mozilla"
   };
-
-  String premiumVideo =
-      "https://example.com/premium_video.mp4"; // Replace with your premium video URL
-  final bool isLive = true;
-
-  late String selectedSource;
   bool _isLoading = true;
+  bool _isError = false;
+  bool _isConnected = true;
 
   @override
   void initState() {
     super.initState();
-    Wakelock.enable(); // Enable wakelock to keep the screen on
-    selectedSource = 'Source 1'; // Initialize the selected source
-    _initializePlayer(longVideo);
+    Wakelock.enable();
+    _checkConnectivityAndInitializePlayer();
+  }
+
+  Future<void> _checkConnectivityAndInitializePlayer() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.none) {
+      setState(() {
+        _isConnected = false;
+        _isLoading = false;
+      });
+    } else {
+      _initializePlayer(longVideo);
+    }
   }
 
   Future<void> _initializePlayer(String videoUrl) async {
-    _videoPlayerController = VideoPlayerController.network(
-      videoUrl,
-      httpHeaders: headers,
-    );
-    await _videoPlayerController.initialize();
-    _chewieController = ChewieController(
-      videoPlayerController: _videoPlayerController,
-      autoInitialize: true,
-      fullScreenByDefault: false,
-      allowFullScreen: true,
-      allowMuting: true,
-      autoPlay: true,
-      isLive: isLive,
-      cupertinoProgressColors: ChewieProgressColors(
-        playedColor: Colors.red,
-        handleColor: Colors.redAccent,
-        backgroundColor: Colors.grey,
-        bufferedColor: Colors.lightBlue,
-      ),
-      materialProgressColors: ChewieProgressColors(
-        playedColor: Colors.red,
-        handleColor: Colors.redAccent,
-        backgroundColor: Colors.grey,
-        bufferedColor: Colors.lightBlue,
-      ),
-      hideControlsTimer: const Duration(seconds: 3),
-      showControlsOnInitialize: true,
-      showOptions: true,
-      controlsSafeAreaMinimum: const EdgeInsets.all(0),
-      aspectRatio: 16 / 9,
-      customControls: CustomControls(isLive: isLive),
-      errorBuilder: (context, errorMessage) {
-        return Center(
-          child: Text(
-            errorMessage,
-            style: const TextStyle(color: Colors.white),
-          ),
-        );
-      },
-    );
-
     setState(() {
-      _isLoading = false;
+      _isLoading = true;
+      _isError = false;
     });
+    try {
+      _videoPlayerController = VideoPlayerController.network(
+        videoUrl,
+        httpHeaders: headers,
+      );
+      await _videoPlayerController.initialize();
+      _chewieController = ChewieController(
+        videoPlayerController: _videoPlayerController,
+        autoInitialize: true,
+        fullScreenByDefault: false,
+        allowFullScreen: true,
+        allowMuting: true,
+        autoPlay: true,
+        isLive: true,
+        cupertinoProgressColors: ChewieProgressColors(
+          playedColor: Colors.red,
+          handleColor: Colors.redAccent,
+          backgroundColor: Colors.grey,
+          bufferedColor: Colors.lightBlue,
+        ),
+        materialProgressColors: ChewieProgressColors(
+          playedColor: Colors.red,
+          handleColor: Colors.redAccent,
+          backgroundColor: Colors.grey,
+          bufferedColor: Colors.lightBlue,
+        ),
+        hideControlsTimer: const Duration(seconds: 3),
+        showControlsOnInitialize: true,
+        showOptions: true,
+        controlsSafeAreaMinimum: const EdgeInsets.all(0),
+        aspectRatio: 16 / 9,
+        errorBuilder: (context, errorMessage) {
+          return Center(
+            child: Text(
+              errorMessage,
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        },
+      );
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (error) {
+      setState(() {
+        _isError = true;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _refresh() async {
-    setState(() {
-      _isLoading = true;
-    });
-    await _initializePlayer(longVideo);
+    _checkConnectivityAndInitializePlayer();
   }
 
   @override
   void dispose() {
     _videoPlayerController.dispose();
-    _chewieController.dispose();
-    Wakelock.disable(); // Disable wakelock when the widget is disposed
+    _chewieController?.dispose();
+    Wakelock.disable();
     super.dispose();
   }
 
@@ -104,46 +118,41 @@ class _StreamingPageState extends State<StreamingPage> {
         title: const Text('Live Stream'),
         backgroundColor: Colors.red,
       ),
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: ListView(
-          children: [
-            Center(
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : SizedBox(
-                      width: MediaQuery.of(context).size.width,
-                      height: MediaQuery.of(context).size.height * 0.4,
-                      child: Chewie(controller: _chewieController),
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class CustomControls extends StatelessWidget {
-  final bool isLive;
-
-  const CustomControls({super.key, required this.isLive});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        if (isLive)
-          const Positioned.fill(
-            child: Align(
-              alignment: Alignment(0, 0.9),
-              child: MaterialControls(
-                  // Add your custom live controls here
-                  
+      body: Center(
+        child: _isLoading
+            ? const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 20),
+                  Text('Streaming is being loaded'),
+                ],
+              )
+            : _isConnected
+                ? _isError
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                              'No internet..Please check your connection and try again.',
+                              textAlign: TextAlign.center),
+                          ElevatedButton(
+                            onPressed: _refresh,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      )
+                    : Chewie(controller: _chewieController!)
+                : const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.signal_wifi_off, size: 100, color: Colors.red),
+                      SizedBox(height: 20),
+                      Text(
+                          'No internet connection. Please check your connection and try again.'),
+                    ],
                   ),
-            ),
-          ),
-      ],
+      ),
     );
   }
 }

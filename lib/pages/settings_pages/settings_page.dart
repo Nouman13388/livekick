@@ -1,18 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:livekick/pages/login_page.dart';
+import 'package:flutter/widgets.dart';
+import 'package:livekick/pages/auth_pages/login_page.dart';
 import 'package:livekick/pages/settings_pages/account_setting_page.dart';
-import 'package:livekick/pages/settings_pages/notification_preference_page.dart';
+import 'package:livekick/pages/settings_pages/notification_preferences_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'streaming_settings_page.dart';
 import 'news_preferences_page.dart';
 import 'privacy_policy_page.dart';
 import 'terms_of_service_page.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   final SharedPreferences prefs;
 
-  const SettingsPage({super.key, required this.prefs});
+  const SettingsPage({Key? key, required this.prefs}) : super(key: key);
+
+  @override
+  _SettingsPageState createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool _isDarkMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isDarkMode = widget.prefs.getBool('darkMode') ?? false;
+  }
+
+  void _toggleDarkMode(bool value) {
+    setState(() {
+      _isDarkMode = value;
+      widget.prefs.setBool('darkMode', value);
+    });
+  }
 
   void _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
@@ -20,7 +41,7 @@ class SettingsPage extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => LoginPage(
-          prefs: prefs,
+          prefs: widget.prefs,
         ),
       ),
       (Route<dynamic> route) => false, // Prevent going back to home
@@ -32,6 +53,12 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
+        actions: [
+          IconButton(
+            icon: Icon(_isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () => _toggleDarkMode(!_isDarkMode),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
@@ -42,7 +69,8 @@ class SettingsPage extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AccountSettingsPage()),
+                MaterialPageRoute(
+                    builder: (context) => const AccountSettingsPage()),
               );
             },
           ),
@@ -53,7 +81,7 @@ class SettingsPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => NotificationPreferencesPage()),
+                    builder: (context) => const NotificationPreferencesPage()),
               );
             },
           ),
@@ -64,7 +92,7 @@ class SettingsPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => StreamingSettingsPage()),
+                    builder: (context) => const StreamingSettingsPage()),
               );
             },
           ),
@@ -74,7 +102,8 @@ class SettingsPage extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => NewsPreferencesPage()),
+                MaterialPageRoute(
+                    builder: (context) => const NewsPreferencesPage()),
               );
             },
           ),

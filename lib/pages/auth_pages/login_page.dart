@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:livekick/pages/banner_ad.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:livekick/controllers/banner_ad.dart';
+import 'package:livekick/pages/auth_pages/forgot_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'home_page.dart';
+import '../home_page.dart';
 import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -22,10 +24,14 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _rememberMe = false;
 
+  BannerAd? _bannerAd;
+  bool _isBannerAdLoaded = false;
+
   @override
   void initState() {
     super.initState();
     _initSharedPreferences();
+    _loadBannerAd();
   }
 
   void _initSharedPreferences() {
@@ -36,15 +42,38 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
+  void _loadBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-8664324039776629/6331020652',
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (Ad ad) {
+          setState(() {
+            _isBannerAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (Ad ad, LoadAdError error) {
+          ad.dispose();
+          print('Failed to load a banner ad: ${error.message}');
+        },
+      ),
+    );
+
+    _bannerAd?.load();
+  }
+
   Future<void> _authenticateUser(BuildContext context) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-              email: _emailController.text, password: _passwordController.text);
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
 
       if (_rememberMe) {
         widget.prefs.setString('email', _emailController.text);
@@ -201,6 +230,23 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  InputDecoration _inputDecoration(String hintText) {
+    return InputDecoration(
+      labelText: hintText,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(),
+      ),
+      filled: true,
+      fillColor: Colors.grey[200],
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Theme.of(context).primaryColor),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -213,26 +259,20 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(height: MediaQuery.of(context).size.height * 0.1),
               Text(
                 'Login to your Account',
-                style: Theme.of(context).textTheme.headline6!.copyWith(
+                style: Theme.of(context).textTheme.headline5!.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               ),
               const SizedBox(height: 30),
               TextField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  hintText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: _inputDecoration('Email'),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  hintText: 'Password',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: _inputDecoration('Password'),
               ),
               const SizedBox(height: 20),
               Row(
@@ -254,20 +294,37 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-                  SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () async {
-                              await _authenticateUser(context);
-                            },
-                      child: _isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text('Sign in'),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>  ForgotPage(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Forgot Password?',
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                      ),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _isLoading ? null : () => _authenticateUser(context),
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text('Sign in'),
               ),
               const SizedBox(height: 20),
               Text(
@@ -304,8 +361,11 @@ class _LoginPageState extends State<LoginPage> {
                         color: Colors.grey[200],
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.person,
-                          size: 40, color: Colors.blue),
+                      child: const Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Colors.blue,
+                      ),
                     ),
                   ),
                 ],
@@ -328,7 +388,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 30),
-              const BannerAdWidget(), // Add the BannerAdWidget here
+              const BannerAdWidget(),
             ],
           ),
         ),

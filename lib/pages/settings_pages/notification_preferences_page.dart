@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
 
-class NewsPreferencesPage extends StatelessWidget {
-  const NewsPreferencesPage({Key? key}) : super(key: key);
+class NotificationPreferencesPage extends StatefulWidget {
+  const NotificationPreferencesPage({Key? key}) : super(key: key);
 
+  @override
+  State<NotificationPreferencesPage> createState() =>
+      _NotificationPreferencesPageState();
+}
+
+class _NotificationPreferencesPageState
+    extends State<NotificationPreferencesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('News Preferences'),
+        title: Text('Notification Preferences'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'News Preferences Page',
+              'Notification Preferences Page',
               style: TextStyle(fontSize: 20),
             ),
             SizedBox(height: 20),

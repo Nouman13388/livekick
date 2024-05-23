@@ -1,8 +1,11 @@
+// home_page.dart
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:livekick/pages/banner_ad.dart';
+import 'package:livekick/controllers/banner_ad.dart';
+import 'package:livekick/pages/notification_page.dart';
 import 'package:livekick/pages/settings_pages/account_setting_page.dart';
-import 'package:livekick/pages/settings_pages/notification_preference_page.dart';
+import 'package:livekick/pages/settings_pages/notification_preferences_page.dart';
 import 'package:livekick/pages/settings_pages/privacy_policy_page.dart';
 import 'package:livekick/pages/settings_pages/streaming_settings_page.dart';
 import 'package:livekick/pages/settings_pages/terms_of_service_page.dart';
@@ -11,10 +14,11 @@ import '../pages/news_page.dart';
 import '../pages/match_schedule.dart';
 import '../pages/settings_pages/settings_page.dart';
 import '../pages/streaming_page.dart';
-import '../pages/login_page.dart';
+import 'auth_pages/login_page.dart';
+import '../pages/search_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key});
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -30,6 +34,9 @@ class _HomePageState extends State<HomePage> {
   String _username = 'User Name';
   String _email = 'user@example.com';
   bool _isSearchExpanded = false;
+  final TextEditingController _searchController = TextEditingController();
+  List<SearchItem> _searchItems = [];
+  List<SearchItem> _filteredItems = [];
 
   @override
   void initState() {
@@ -37,6 +44,7 @@ class _HomePageState extends State<HomePage> {
     _tabScreens = List.filled(4, const SizedBox());
     _initSharedPreferences();
     _fetchUserDetails();
+    _initializeSearchItems();
   }
 
   void _initSharedPreferences() async {
@@ -61,10 +69,49 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _initializeSearchItems() {
+    _searchItems = [
+      SearchItem('News', const NewsPage()),
+      SearchItem('Match Schedule', const MatchSchedule()),
+      SearchItem('Streaming', const StreamingPage()),
+      SearchItem('Account Settings', const AccountSettingsPage()),
+      SearchItem(
+          'Notification Preferences', const NotificationPreferencesPage()),
+      SearchItem('Streaming Settings', const StreamingSettingsPage()),
+      SearchItem('Privacy Policy', PrivacyPolicyPage()),
+      SearchItem('Terms of Service', TermsOfServicePage()),
+      SearchItem('Home Page', const HomePage()),
+      SearchItem('Streaming Page', const StreamingPage()),
+      SearchItem('Schedule Page', const MatchSchedule()),
+    ];
+  }
+
   void _toggleSearch() {
     setState(() {
       _isSearchExpanded = !_isSearchExpanded;
+      _filteredItems.clear();
     });
+
+    if (!_isSearchExpanded) {
+      _searchController.clear();
+    }
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {
+      _filteredItems = _searchItems
+          .where(
+              (item) => item.title.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  void _onSearchItemTapped(SearchItem item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => item.page),
+    );
+    _toggleSearch();
   }
 
   void _onTabSelected(int index) {
@@ -88,7 +135,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildDrawerHeader() {
     return DrawerHeader(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.blue,
       ),
       child: Column(
@@ -99,18 +146,18 @@ class _HomePageState extends State<HomePage> {
               radius: 30,
               backgroundImage: NetworkImage(_user!.photoURL ?? ''),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               _username,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
               ),
             ),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             Text(
               _email,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 14,
               ),
@@ -133,17 +180,32 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildSearchSuggestions() {
+    return ListView.builder(
+      itemCount: _filteredItems.length,
+      itemBuilder: (context, index) {
+        final item = _filteredItems[index];
+        return ListTile(
+          title: Text(item.title),
+          onTap: () => _onSearchItemTapped(item),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
         title: _isSearchExpanded
-            ? const TextField(
-                decoration: InputDecoration(
+            ? TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
                   hintText: 'Search...',
                   border: InputBorder.none,
                 ),
+                onChanged: _onSearchChanged,
               )
             : const Text('LiveKick'),
         centerTitle: !_isSearchExpanded,
@@ -164,6 +226,10 @@ class _HomePageState extends State<HomePage> {
             icon: const Icon(Icons.notifications),
             onPressed: () {
               // Implement your notification functionality here
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const NotificationPage()));
             },
           ),
         ],
@@ -192,7 +258,7 @@ class _HomePageState extends State<HomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => NotificationPreferencesPage(),
+                    builder: (context) => const NotificationPreferencesPage(),
                   ),
                 );
               },
@@ -204,7 +270,7 @@ class _HomePageState extends State<HomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => StreamingSettingsPage(),
+                    builder: (context) => const StreamingSettingsPage(),
                   ),
                 );
               },
@@ -256,8 +322,11 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Column(
         children: [
-          Expanded(child: _tabScreens[_selectedTabIndex]),
-          BannerAdWidget(), // Add the BannerAdWidget here
+          if (_isSearchExpanded)
+            Expanded(child: _buildSearchSuggestions())
+          else
+            Expanded(child: _tabScreens[_selectedTabIndex]),
+          const BannerAdWidget(), // Add the BannerAdWidget here
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
