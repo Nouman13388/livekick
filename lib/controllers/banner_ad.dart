@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -15,9 +16,13 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   @override
   void initState() {
     super.initState();
+    _loadBannerAd();
+  }
 
+  void _loadBannerAd() {
     _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-8664324039776629/8693460116', // Replace with your actual Ad Unit ID
+      adUnitId:
+          'ca-app-pub-8664324039776629/8693460116', // Replace with your own ad unit ID
       request: const AdRequest(),
       size: AdSize.banner,
       listener: BannerAdListener(
@@ -28,7 +33,9 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
         },
         onAdFailedToLoad: (ad, error) {
           ad.dispose();
-          print('Ad failed to load: $error');
+          if (kDebugMode) {
+            print('Ad failed to load: $error');
+          }
         },
       ),
     );
@@ -45,7 +52,8 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   @override
   Widget build(BuildContext context) {
     return _isBannerAdReady
-        ? SizedBox(
+        ? Container(
+            alignment: Alignment.center,
             width: _bannerAd.size.width.toDouble(),
             height: _bannerAd.size.height.toDouble(),
             child: AdWidget(ad: _bannerAd),

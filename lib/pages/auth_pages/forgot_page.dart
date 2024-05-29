@@ -3,6 +3,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:livekick/controllers/banner_ad.dart';
 import 'package:livekick/pages/auth_pages/login_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -73,6 +74,10 @@ class _ForgotPageState extends State<ForgotPage> {
             },
             child: const Text("SEND"),
           ),
+          const SizedBox(height: 30),
+          const Center(
+            child: BannerAdWidget(),
+          )
         ],
       ),
     );

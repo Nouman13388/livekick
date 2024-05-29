@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:livekick/controllers/banner_ad.dart';
-import '../home_page.dart';
 
 class SignUpPage extends StatefulWidget {
-  const SignUpPage({Key? key}) : super(key: key);
+  const SignUpPage({super.key});
 
   @override
   _SignUpPageState createState() => _SignUpPageState();
@@ -143,12 +142,12 @@ class _SignUpPageState extends State<SignUpPage> {
         builder: (context, constraints) {
           double padding = 20.0;
           double titleFontSize =
-              Theme.of(context).textTheme.headline5!.fontSize!;
+              Theme.of(context).textTheme.headlineSmall!.fontSize!;
           double buttonFontSize = 16.0;
 
           if (constraints.maxWidth > 600) {
             padding = 40.0;
-            titleFontSize = Theme.of(context).textTheme.headline4!.fontSize!;
+            titleFontSize = Theme.of(context).textTheme.headlineMedium!.fontSize!;
             buttonFontSize = 18.0;
           }
 
@@ -162,9 +161,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     children: [
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.1),
+                      const BannerAdWidget(),
+                      const SizedBox(height: 20),
                       Text(
                         'Sign Up for an Account',
-                        style: Theme.of(context).textTheme.headline5!.copyWith(
+                        style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                               fontSize: titleFontSize,
                               fontWeight: FontWeight.bold,
                             ),
@@ -204,13 +205,14 @@ class _SignUpPageState extends State<SignUpPage> {
                               ),
                       ),
                       const SizedBox(height: 40),
-                      const BannerAdWidget(),
+                      const Center(
+                        child: BannerAdWidget(),
+                      ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 30),
-              const BannerAdWidget(),
             ],
           );
         },

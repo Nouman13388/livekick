@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AppOpenAdManager {
@@ -19,7 +20,9 @@ class AppOpenAdManager {
           _showAppOpenAd();
         },
         onAdFailedToLoad: (error) {
-          print('Failed to load an app open ad: ${error.message}');
+          if (kDebugMode) {
+            print('Failed to load an app open ad: ${error.message}');
+          }
           _appOpenAd = null;
           _adLoaded = false;
         },

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:livekick/controllers/banner_ad.dart';
 import 'package:livekick/pages/auth_pages/forgot_page.dart';
@@ -12,7 +11,7 @@ import 'signup_page.dart';
 class LoginPage extends StatefulWidget {
   final SharedPreferences prefs;
 
-  const LoginPage({super.key, required this.prefs});
+  const LoginPage({Key? key, required this.prefs}) : super(key: key);
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -24,14 +23,10 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _rememberMe = false;
 
-  BannerAd? _bannerAd;
-  bool _isBannerAdLoaded = false;
-
   @override
   void initState() {
     super.initState();
     _initSharedPreferences();
-    _loadBannerAd();
   }
 
   void _initSharedPreferences() {
@@ -40,27 +35,6 @@ class _LoginPageState extends State<LoginPage> {
       _passwordController.text = widget.prefs.getString('password') ?? '';
       _rememberMe = widget.prefs.getBool('rememberMe') ?? false;
     });
-  }
-
-  void _loadBannerAd() {
-    _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-8664324039776629/6331020652',
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (Ad ad) {
-          setState(() {
-            _isBannerAdLoaded = true;
-          });
-        },
-        onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          ad.dispose();
-          print('Failed to load a banner ad: ${error.message}');
-        },
-      ),
-    );
-
-    _bannerAd?.load();
   }
 
   Future<void> _authenticateUser(BuildContext context) async {
@@ -259,7 +233,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(height: MediaQuery.of(context).size.height * 0.1),
               Text(
                 'Login to your Account',
-                style: Theme.of(context).textTheme.headline5!.copyWith(
+                style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -290,7 +264,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       Text(
                         'Remember Me',
-                        style: Theme.of(context).textTheme.subtitle1,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ],
                   ),
@@ -299,7 +273,7 @@ class _LoginPageState extends State<LoginPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>  ForgotPage(),
+                          builder: (context) => ForgotPage(),
                         ),
                       );
                     },
@@ -329,7 +303,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 20),
               Text(
                 'Or sign in with',
-                style: Theme.of(context).textTheme.subtitle1,
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 20),
               Row(
@@ -382,7 +356,7 @@ class _LoginPageState extends State<LoginPage> {
                 },
                 child: Text(
                   "Don't have an account? Sign up",
-                  style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                  style: Theme.of(context).textTheme.titleMedium!.copyWith(
                         color: Colors.blue,
                       ),
                 ),

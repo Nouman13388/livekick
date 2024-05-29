@@ -46,7 +46,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: SplashScreen(prefs: widget.prefs),
-      // home: LoginPage(prefs: widget.prefs), // Moved to SplashScreen
     );
   }
 }
