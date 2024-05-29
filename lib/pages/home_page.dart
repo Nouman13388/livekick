@@ -326,7 +326,7 @@ class _HomePageState extends State<HomePage> {
             Expanded(child: _buildSearchSuggestions())
           else
             Expanded(child: _tabScreens[_selectedTabIndex]),
-          BannerAdWidget(), // Add the BannerAdWidget here
+          const BannerAdWidget(), // Add the BannerAdWidget here
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
